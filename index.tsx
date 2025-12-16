@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react';
 import { createRoot } from 'react-dom/client';
 import { UploadIcon, DownloadIcon, PlayIcon, PauseIcon, RefreshIcon, TrashIcon, ZoomInIcon, ZoomOutIcon, EyeIcon, LayoutIcon, SettingsIcon, AlertIcon, SwapIcon, ChevronUp, ChevronDown, MenuIcon, XIcon, ArrowLeftIcon, ArrowRightIcon } from './icons';
 import { Frame, JobSettings, PhysicsSettings, Unit, CalibrationSettings, Preset } from './types';
@@ -60,36 +60,43 @@ const Input = ({
   label, value, onChange, step = 0.1, unit, tooltip, min, error 
 }: { 
   label: string, value: number, onChange: (v: number) => void, step?: number, unit?: string, tooltip?: string, min?: number, error?: string 
-}) => (
-  <div className="flex flex-col gap-1 w-full" title={tooltip}>
-    <div className="flex justify-between items-baseline px-0.5">
-      <label className="text-[10px] font-semibold text-textDim uppercase tracking-wide truncate pr-1">{label}</label>
-      {error && <span className="text-[9px] text-error font-medium truncate">{error}</span>}
+}) => {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1 w-full" title={tooltip}>
+      <div className="flex justify-between items-baseline px-0.5">
+        <label htmlFor={id} className="text-[10px] font-semibold text-textDim uppercase tracking-wide truncate pr-1">{label}</label>
+        {error && <span className="text-[9px] text-error font-medium truncate">{error}</span>}
+      </div>
+      <div className={`relative flex items-center bg-background border rounded transition-colors h-9
+        ${error ? 'border-error/50' : 'border-border hover:border-textDim focus-within:border-primary focus-within:ring-1 focus-within:ring-primary'}`}>
+        <input
+          id={id}
+          type="number" step={step} value={value} min={min}
+          onChange={(e) => {
+              const newVal = parseFloat(e.target.value);
+              if (!isNaN(newVal)) onChange(newVal);
+          }}
+          className="w-full bg-transparent text-xs text-text font-mono px-2 outline-none h-full"
+        />
+        {unit && <span className="text-[10px] text-textDim font-medium pr-2 pointer-events-none select-none">{unit}</span>}
+      </div>
     </div>
-    <div className={`relative flex items-center bg-background border rounded transition-colors h-9
-      ${error ? 'border-error/50' : 'border-border hover:border-textDim focus-within:border-primary focus-within:ring-1 focus-within:ring-primary'}`}>
-      <input 
-        type="number" step={step} value={value} min={min}
-        onChange={(e) => {
-            const newVal = parseFloat(e.target.value);
-            if (!isNaN(newVal)) onChange(newVal);
-        }}
-        className="w-full bg-transparent text-xs text-text font-mono px-2 outline-none h-full"
-      />
-      {unit && <span className="text-[10px] text-textDim font-medium pr-2 pointer-events-none select-none">{unit}</span>}
-    </div>
-  </div>
-);
+  );
+};
 
 const Select = ({ 
     label, value, options, onChange 
 }: { 
     label: string, value: string, options: {value: string, label: string}[], onChange: (val: string) => void 
-}) => (
+}) => {
+  const id = useId();
+  return (
     <div className="flex flex-col gap-1 w-full">
-      <label className="text-[10px] font-semibold text-textDim uppercase tracking-wide px-0.5">{label}</label>
+      <label htmlFor={id} className="text-[10px] font-semibold text-textDim uppercase tracking-wide px-0.5">{label}</label>
       <div className="relative h-9">
           <select 
+              id={id}
               value={value} 
               onChange={e => onChange(e.target.value)}
               className="w-full h-full bg-background border border-border rounded text-xs text-text px-2 outline-none appearance-none hover:border-textDim focus:border-primary focus:ring-1 focus:ring-primary transition-colors cursor-pointer"
@@ -101,7 +108,8 @@ const Select = ({
           </div>
       </div>
     </div>
-);
+  );
+};
 
 const Button = ({ 
     onClick, disabled, active, children, variant = 'primary', className = '' 
@@ -630,6 +638,7 @@ const App = () => {
            <button 
              className="md:hidden p-2 -ml-2 text-textDim hover:text-white transition-colors"
              onClick={() => setMobileMenuOpen(true)}
+             aria-label="Open menu"
            >
               <MenuIcon />
            </button>
@@ -747,7 +756,7 @@ const App = () => {
              <h2 className="font-bold text-white flex items-center gap-2">
                  <SettingsIcon className="w-4 h-4"/> Settings
              </h2>
-             <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-surfaceHighlight rounded">
+             <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-surfaceHighlight rounded" aria-label="Close menu">
                  <XIcon />
              </button>
           </div>
@@ -786,7 +795,7 @@ const App = () => {
                      <h2 className="font-semibold text-xs text-text">Sequence <span className="text-textDim text-[10px] font-normal ml-1">({frames.length} frames)</span></h2>
                      <div className="flex gap-1">
                         {frames.length > 1 && (
-                            <button onClick={handleReverseFrames} className="text-primary hover:text-primaryHover transition-colors p-1" title="Reverse">
+                            <button onClick={handleReverseFrames} className="text-primary hover:text-primaryHover transition-colors p-1" title="Reverse" aria-label="Reverse frames order">
                                <SwapIcon className="w-4 h-4"/>
                             </button>
                         )}
@@ -795,7 +804,7 @@ const App = () => {
                              <input type="file" multiple accept="image/*" onChange={handleFileUpload} className="hidden" />
                         </label>
                         {frames.length > 0 && (
-                            <button onClick={() => { setFrames([]); setSelectedFrameId(null); }} className="text-textDim hover:text-error transition-colors p-1" title="Clear All">
+                            <button onClick={() => { setFrames([]); setSelectedFrameId(null); }} className="text-textDim hover:text-error transition-colors p-1" title="Clear All" aria-label="Clear all frames">
                                 <TrashIcon className="w-4 h-4"/>
                             </button>
                         )}
@@ -844,7 +853,7 @@ const App = () => {
                                
                                {selectedFrameId !== f.id && (
                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                      <button onClick={(e) => { e.stopPropagation(); setFrames(frames.filter(x => x.id !== f.id)); }} className="text-white hover:text-error p-2"><TrashIcon className="w-4 h-4" /></button>
+                                      <button onClick={(e) => { e.stopPropagation(); setFrames(frames.filter(x => x.id !== f.id)); }} className="text-white hover:text-error p-2" aria-label="Delete frame"><TrashIcon className="w-4 h-4" /></button>
                                    </div>
                                )}
                             </div>
@@ -871,6 +880,7 @@ const App = () => {
                                         onClick={() => moveFrame(selectedFrame.id, -1)} 
                                         className="bg-surfaceHighlight hover:bg-primary hover:text-white text-textDim rounded p-1.5 transition-colors"
                                         disabled={frames.findIndex(f => f.id === selectedFrame.id) === 0}
+                                        aria-label="Move frame earlier"
                                     >
                                         <ArrowLeftIcon className="w-4 h-4"/>
                                     </button>
@@ -878,6 +888,7 @@ const App = () => {
                                         onClick={() => moveFrame(selectedFrame.id, 1)} 
                                         className="bg-surfaceHighlight hover:bg-primary hover:text-white text-textDim rounded p-1.5 transition-colors"
                                         disabled={frames.findIndex(f => f.id === selectedFrame.id) === frames.length - 1}
+                                        aria-label="Move frame later"
                                     >
                                         <ArrowRightIcon className="w-4 h-4"/>
                                     </button>
@@ -1078,7 +1089,11 @@ const App = () => {
                            <span className="text-[10px] font-bold text-text uppercase tracking-wide flex items-center gap-2">
                               Simulation
                            </span>
-                           <button onClick={() => setPanelMinimized(!panelMinimized)} className="text-textDim hover:text-text p-2 -mr-2">
+                           <button
+                               onClick={() => setPanelMinimized(!panelMinimized)}
+                               className="text-textDim hover:text-text p-2 -mr-2"
+                               aria-label={panelMinimized ? "Expand simulation panel" : "Minimize simulation panel"}
+                           >
                                {panelMinimized ? <ChevronDown className="w-4 h-4"/> : <ChevronUp className="w-4 h-4"/>}
                            </button>
                         </div>
@@ -1121,16 +1136,16 @@ const App = () => {
                        const pixelRatio = window.devicePixelRatio || 1;
                        setZoom(1 / pixelRatio); 
                        setPan({x:0, y:0}); 
-                   }} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors" title="1:1">
+                   }} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors" title="1:1" aria-label="Actual size">
                      <span className="font-mono text-[10px] font-bold">1:1</span>
                    </button>
-                   <button onClick={() => setZoom(z => Math.min(z * 1.5, 20))} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors">
+                   <button onClick={() => setZoom(z => Math.min(z * 1.5, 20))} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors" aria-label="Zoom in">
                      <ZoomInIcon className="w-5 h-5"/>
                    </button>
-                   <button onClick={() => { setZoom(0.5); setPan({x:0, y:0}); }} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors" title="Fit">
+                   <button onClick={() => { setZoom(0.5); setPan({x:0, y:0}); }} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors" title="Fit" aria-label="Fit to view">
                      <RefreshIcon className="w-5 h-5"/>
                    </button>
-                   <button onClick={() => setZoom(z => Math.max(z / 1.5, 0.05))} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors">
+                   <button onClick={() => setZoom(z => Math.max(z / 1.5, 0.05))} className="p-2.5 text-textDim hover:text-text hover:bg-surfaceHighlight rounded transition-colors" aria-label="Zoom out">
                      <ZoomOutIcon className="w-5 h-5"/>
                    </button>
                 </div>
