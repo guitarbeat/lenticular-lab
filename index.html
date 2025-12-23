@@ -31,6 +31,20 @@
             sans: ['"Inter"', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
+          animation: {
+            'shimmer': 'shimmer 2.5s infinite linear',
+            'glow-pulse': 'glow-pulse 2s infinite ease-in-out',
+          },
+          keyframes: {
+            shimmer: {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(100%)' },
+            },
+            'glow-pulse': {
+              '0%, 100%': { opacity: '0.3', boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
+              '50%': { opacity: '0.6', boxShadow: '0 0 60px rgba(59, 130, 246, 0.6)' },
+            }
+          }
         }
       }
     }
